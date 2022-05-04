@@ -1,4 +1,4 @@
-# Hdfs to GCS (HDFS2GCS)  
+# HDFS to GCS (HDFS2GCS)  
 This repository contains Terraform scripts to deploy HDFS to GCS transfer solution. 
 
 ## Features
