@@ -23,7 +23,7 @@ resource "google_compute_instance" "nifi-ca" {
     tags = ["nifi-ca"]
 
     service_account {
-        scopes = ["storage-rw"]
+        scopes = ["cloud-platform"]
     }
     
     boot_disk {
@@ -40,10 +40,10 @@ resource "google_compute_instance" "nifi-ca" {
     metadata_startup_script =   <<EOF
 
         if [[ "${var.image}" == *"centos"* ]]; then
-          gsutil cp  ${var.nifi-bucket}/unzip*.rpm /opt
+          gsutil cp  ${var.nifi-bucket}/binaries/unzip*.rpm /opt
           yum install  /opt/unzip*.rpm -y
         else 
-          gsutil cp  ${var.nifi-bucket}/unzip*.deb /opt
+          gsutil cp  ${var.nifi-bucket}/binaries/unzip*.deb /opt
           apt-get install /opt/unzip*.deb -y
         fi
               
