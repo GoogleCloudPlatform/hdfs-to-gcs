@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
- // This file creates firewall rules for provisioned VPC network.
+// This file creates firewall rules for provisioned VPC network
 
 // Firewall rule for ssh access to cluster VMs
 resource "google_compute_firewall" "allow-ssh" {
@@ -29,7 +28,7 @@ resource "google_compute_firewall" "allow-ssh" {
     source_ranges = [
         "0.0.0.0/0"
     ]
-    target_tags = ["nifi-host", "zookeeper", "nifi-ca"]
+    target_tags = ["nifi-host", "zookeeper", "nifi-ca" , "bastionhost"]
 }
 
 // Firewall rule for cluster VMs for internal communications
@@ -38,7 +37,7 @@ resource "google_compute_firewall" "allow-internal" {
     name    = "allow-internal"
     network = "${google_compute_network.default.name}"
 
-    allow { 
+    allow {
         protocol = "icmp"
     }
 
@@ -55,7 +54,9 @@ resource "google_compute_firewall" "allow-internal" {
     source_ranges = [
         "${google_compute_subnetwork.default.ip_cidr_range}"
     ]
+
 }
+
 // Firewall rule for bastion host to access NIFI VMs through https
 resource "google_compute_firewall" "allow-https" {
     
@@ -70,6 +71,7 @@ resource "google_compute_firewall" "allow-https" {
     target_tags  = ["nifi-host"]
     source_tags = ["bastionhost"]
 }
+
 // Firewall rule to open up RDP on bastion host Windows VM
 resource "google_compute_firewall" "bastionhost-allow-rdp" {
     name = "bastionhost-allow-rdp"

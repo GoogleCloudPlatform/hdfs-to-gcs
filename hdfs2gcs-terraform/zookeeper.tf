@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// The scripts provisions resources requried for Zookeeper cluster 
 
- // The scripts provisions resources requried for Zookeeper cluster 
-
-// Creating Zookeeper VM instances 
+// Creating Zookeeper VM instances
 resource "google_compute_instance" "zookeeper" {
     count        = var.instance-count-zk
     name         = "${var.zookeeper-hostname}-${count.index + 1}"
@@ -24,6 +23,7 @@ resource "google_compute_instance" "zookeeper" {
     zone         = var.zone
     project      = var.project-id
     allow_stopping_for_update = true
+
     tags = ["zookeeper"]
 
     service_account {
@@ -39,18 +39,18 @@ resource "google_compute_instance" "zookeeper" {
     network_interface {
         network            = google_compute_network.default.name
         subnetwork         = google_compute_subnetwork.default.name
-        access_config {  
-    } // uncomment to generate ephemeral external IP
     }
 
     metadata_startup_script =   <<EOF
 
-        if [[ "${var.image}" == *"centos"* ]]; then 
-            yum install  unzip  java-11-openjdk-devel -y
+        if [[ "${var.image}" == *"centos"* ]]; then
+          gsutil cp  ${var.nifi-bucket}/binaries/unzip*.rpm /opt
+          yum install  /opt/unzip*.rpm -y
         else 
-            apt-get update && apt-get install   unzip  openjdk-11-jdk -y
+          gsutil cp  ${var.nifi-bucket}/binaries/unzip*.deb /opt
+          apt-get install /opt/unzip*.deb -y
         fi
-        
+       
         ZOOK_UID=10000
         ZOOK_GID=10000
 
@@ -62,10 +62,20 @@ resource "google_compute_instance" "zookeeper" {
             && chown -R zookeeper:zookeeper /opt/zookeeper \
             && chown -R zookeeper:zookeeper /var/lib/zookeeper 
             
-        su zookeeper -c 'curl -fSL https://downloads.apache.org/zookeeper/zookeeper-${var.zk-version}/apache-zookeeper-${var.zk-version}-bin.tar.gz -o /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin.tar.gz'
+        mkdir -p /usr/lib/jvm
+        gsutil -m cp -r  ${var.nifi-bucket}/binaries/openjdk-11+28_linux-x64_bin.tar.gz /usr/lib/jvm/
+        cd /usr/lib/jvm/ && tar -xzvf openjdk-11+28_linux-x64_bin.tar.gz
+        rm /usr/lib/jvm//openjdk-11+28_linux-x64_bin.tar.gz
+        chmod -R a+x  /usr/lib/jvm/
+        chown -R zookeeper:zookeeper /usr/lib/jvm/
+        echo "export JAVA_HOME=/usr/lib/jvm/jdk-11" >> ~/.bashrc
+        echo "export PATH=$PATH:/usr/lib/jvm/jdk-11/bin" >> ~/.bashrc
         chown -R zookeeper:zookeeper /opt/zookeeper/
-        su zookeeper -c 'cd /opt/zookeeper && tar -xzvf /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin.tar.gz'
-        su zookeeper -c 'rm /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin.tar.gz'
+        gsutil -m cp -r ${var.nifi-bucket}/binaries/apache-zookeeper-${var.zk-version}-bin.tar.gz /opt/zookeeper
+        cd /opt/zookeeper && tar -xzvf /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin.tar.gz
+        rm /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin.tar.gz
+        chown -R zookeeper:zookeeper /opt/zookeeper/*
+        find /opt/zookeeper -type f -iname "*.sh" -exec chmod +x {} \;
         echo "tickTime=2000" > /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
         echo "dataDir=/var/lib/zookeeper" >> /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
         echo "clientPort=2181" >> /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
@@ -80,8 +90,8 @@ resource "google_compute_instance" "zookeeper" {
                 echo "server.$i=${var.zookeeper-hostname}-$i:2888:3888" >> /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
             fi
         done
-        chown zookeeper:zookeeper /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
-        su zookeeper -c 'cd /home/zookeeper && /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/bin/zkServer.sh start'
+        chown -R zookeeper:zookeeper /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/
+        su zookeeper -c 'export PATH=$PATH:/usr/lib/jvm/jdk-11/bin && cd /home/zookeeper && /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/bin/zkServer.sh start'
     
     EOF
 }

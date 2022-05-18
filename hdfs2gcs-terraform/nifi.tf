@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// This file creates resources required for NIFI cluster for HDFS to GCS solution
 
- // This file creates resources required for NIFI cluster for HDFS to GCS solution
 
 // Creating disks for each VM to store NIFI data respositories
 resource "google_compute_disk" "nifi-disk-" {
@@ -24,11 +24,12 @@ resource "google_compute_disk" "nifi-disk-" {
   zone  = var.zone
   count = var.instance-count-nifi
   size = var.disk-size
-
   labels = {
     environment = "dev"
   }
 }
+
+
 
 //creating VM instances for NIFI cluster
 resource "google_compute_instance" "nifi" {
@@ -50,55 +51,66 @@ resource "google_compute_instance" "nifi" {
       source      = "${element(google_compute_disk.nifi-disk-.*.self_link, count.index)}"
       device_name = "${element(google_compute_disk.nifi-disk-.*.name, count.index)}"
    }
-
+   
   tags = ["nifi-host"]
 
   service_account {
         scopes = ["cloud-platform"]
     }
-  network_interface {  
+  network_interface {
     network            = google_compute_network.default.name
     subnetwork         = google_compute_subnetwork.default.name
-    access_config { 
-    } // uncomment to generate ephemeral external IP
   }
 
   lifecycle {
     ignore_changes = [attached_disk]
   }
-
-   metadata_startup_script =   <<EOF
-
+  // Initial script running on all VM instances
+  metadata_startup_script =   <<EOF
         if [[ "${var.image}" == *"centos"* ]]; then
-          yum install unzip  java-11-openjdk-devel  -y
-        else
-          apt-get update && apt-get install  unzip  openjdk-11-jdk -y
+          gsutil cp  ${var.nifi-bucket}/binaries/unzip*.rpm /opt
+          yum install /opt/unzip*.rpm -y 
+        else 
+          gsutil cp  ${var.nifi-bucket}/binaries/unzip*.deb /opt
+          apt-get install /opt/unzip*.deb -y
         fi
-
+      
         mkdir -p /mnt/disks/nifi-repo
         mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/sdb
         mount -o discard,defaults /dev/sdb /mnt/disks/nifi-repo
 
         NIFI_UID=10000
         NIFI_GID=10000
-
         groupadd -g $${NIFI_GID} nifi || groupmod -n nifi `getent group $${NIFI_GID} | cut -d: -f1` \
             && useradd --shell /bin/bash -u $${NIFI_UID} -g $${NIFI_GID} -m nifi \
             && mkdir -p ${var.nifi-path} \
             
-        chown -R nifi /mnt/disks/nifi-repo
-        chown -R nifi:nifi ${var.nifi-path}
-        su nifi -c 'curl -fSL https://archive.apache.org/dist/nifi/${var.nifi-version}/nifi-${var.nifi-version}-bin.zip -o ${var.nifi-path}/nifi-${var.nifi-version}-bin.zip'
-        su nifi -c 'unzip ${var.nifi-path}/nifi-${var.nifi-version}-bin.zip -d ${var.nifi-path}'
-        su nifi -c 'rm ${var.nifi-path}/nifi-${var.nifi-version}-bin.zip'
+        chown -R nifi:nifi /mnt/disks/nifi-repo
+        mkdir -p /usr/lib/jvm
+        gsutil -m cp -r  ${var.nifi-bucket}/binaries/openjdk-11+28_linux-x64_bin.tar.gz /usr/lib/jvm/
+        cd /usr/lib/jvm/ && tar -xzvf openjdk-11+28_linux-x64_bin.tar.gz
+        rm /usr/lib/jvm//openjdk-11+28_linux-x64_bin.tar.gz
 
-        su nifi -c 'curl -fSL https://archive.apache.org/dist/nifi/${var.nifi-version}/nifi-toolkit-${var.nifi-version}-bin.zip -o ${var.nifi-path}/nifi-toolkit-${var.nifi-version}-bin.zip'
-        su nifi -c 'unzip ${var.nifi-path}/nifi-toolkit-${var.nifi-version}-bin.zip -d ${var.nifi-path}'
-        su nifi -c 'rm ${var.nifi-path}/nifi-toolkit-${var.nifi-version}-bin.zip'
-        echo "testing the connection"
-        until nc -z nifi-ca 9443 >/dev/null 2>&1; do :; done
+        chmod -R a+x  /usr/lib/jvm/
+        chown -R nifi:nifi /usr/lib/jvm/
+        su nifi -c 'echo "export JAVA_HOME=/usr/lib/jvm/jdk-11" >> ~/.bashrc'
+        su nifi -c 'echo "export PATH=$PATH:/usr/lib/jvm/jdk-11/bin" >> ~/.bashrc'
         
-        su nifi -c 'cd ${var.nifi-path}/nifi-${var.nifi-version}/conf && ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh client  -c ${var.nifi-ca-hostname} -t ${var.ca-token} '
+        gsutil cp  ${var.nifi-bucket}/binaries/nifi-${var.nifi-version}-bin.zip ${var.nifi-path}
+        unzip ${var.nifi-path}/nifi-${var.nifi-version}-bin.zip -d ${var.nifi-path}
+        rm ${var.nifi-path}/nifi-${var.nifi-version}-bin.zip
+
+        gsutil cp ${var.nifi-bucket}/binaries/nifi-toolkit-${var.nifi-version}-bin.zip ${var.nifi-path}
+        unzip ${var.nifi-path}/nifi-toolkit-${var.nifi-version}-bin.zip -d ${var.nifi-path}
+        rm ${var.nifi-path}/nifi-toolkit-${var.nifi-version}-bin.zip
+
+        chown -R nifi:nifi ${var.nifi-path}/*
+        find ${var.nifi-path} -type f -iname "*.sh" -exec chmod +x {} \;
+        
+        echo "testing the connection"
+        until ping -c1 nifi-ca >/dev/null 2>&1; do :; done
+        
+        su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk-11/bin && cd ${var.nifi-path}/nifi-${var.nifi-version}/conf && ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh client  -c ${var.nifi-ca-hostname} -t ${var.ca-token} '
         until  ls ${var.nifi-path}/nifi-${var.nifi-version}/conf/config.json; do
         sleep 1
         done
@@ -106,10 +118,9 @@ resource "google_compute_instance" "nifi" {
         KEY_PASSWORD=`cat ${var.nifi-path}/nifi-${var.nifi-version}/conf/config.json | grep -o '"keyPassword" : "[^"]*' | grep -o '[^"]*$'`
         TRUSTSTORE_PASSWORD=`cat ${var.nifi-path}/nifi-${var.nifi-version}/conf/config.json | grep -o '"trustStorePassword" : "[^"]*' | grep -o '[^"]*$'`
 
-        keytool -storepasswd -new ${var.cert-password} -keystore ${var.nifi-path}/nifi-${var.nifi-version}/conf/keystore.jks -storepass $KEYSTORE_PASSWORD
-        keytool -storepasswd -new ${var.cert-password} -keystore ${var.nifi-path}/nifi-${var.nifi-version}/conf/truststore.jks -storepass $TRUSTSTORE_PASSWORD
-        keytool -keypasswd  -alias nifi-key  -keystore  ${var.nifi-path}/nifi-${var.nifi-version}/conf/keystore.jks -storepass ${var.cert-password} -keypass $KEY_PASSWORD -new ${var.cert-password}
-
+        export PATH=$PATH:/usr/lib/jvm/jdk-11/bin && keytool -storepasswd -new ${var.cert-password} -keystore ${var.nifi-path}/nifi-${var.nifi-version}/conf/keystore.jks -storepass $KEYSTORE_PASSWORD
+        export PATH=$PATH:/usr/lib/jvm/jdk-11/bin && keytool -storepasswd -new ${var.cert-password} -keystore ${var.nifi-path}/nifi-${var.nifi-version}/conf/truststore.jks -storepass $TRUSTSTORE_PASSWORD
+        export PATH=$PATH:/usr/lib/jvm/jdk-11/bin && keytool -keypasswd  -alias nifi-key  -keystore  ${var.nifi-path}/nifi-${var.nifi-version}/conf/keystore.jks -storepass ${var.cert-password} -keypass $KEY_PASSWORD -new ${var.cert-password}
         prop_replace () {
             sed -i -e "s|^$1=.*$|$1=$2|"  $3
         }
@@ -122,16 +133,13 @@ resource "google_compute_instance" "nifi" {
         KEY_PASSWORD=${var.cert-password}
         TRUSTSTORE_PASSWORD=${var.cert-password}
 
-        prop_replace 'nifi.web.http.port'               ''                                                             "$${NIFI_CONFIG_FILE}"
-        prop_replace 'nifi.web.http.host'               ''                                                               "$${NIFI_CONFIG_FILE}"
-        prop_replace 'nifi.web.https.port'              "$${NIFI_WEB_HTTPS_PORT:-8443}"                                  "$${NIFI_CONFIG_FILE}"
-        prop_replace 'nifi.web.https.host'              "$${NIFI_WEB_HTTPS_HOST:-$HOSTNAME}"                             "$${NIFI_CONFIG_FILE}"
-        prop_replace 'nifi.remote.input.http.enabled'   'true'                                                           "$${NIFI_CONFIG_FILE}"
-        
-        prop_replace 'nifi.zookeeper.connect.string'    '${var.zookeeper-hostname}:2181'                                 "$${NIFI_CONFIG_FILE}"
-        
+        prop_replace 'nifi.web.http.port'                 ''                                                             "$${NIFI_CONFIG_FILE}"
+        prop_replace 'nifi.web.http.host'                 ''                                                             "$${NIFI_CONFIG_FILE}"
+        prop_replace 'nifi.web.https.port'                "$${NIFI_WEB_HTTPS_PORT:-8443}"                                "$${NIFI_CONFIG_FILE}"
+        prop_replace 'nifi.web.https.host'                "$${NIFI_WEB_HTTPS_HOST:-$HOSTNAME}"                           "$${NIFI_CONFIG_FILE}"
+        prop_replace 'nifi.remote.input.http.enabled'     'true'                                                         "$${NIFI_CONFIG_FILE}"
+        prop_replace 'nifi.zookeeper.connect.string'      '${var.zookeeper-hostname}:2181'                               "$${NIFI_CONFIG_FILE}"
         sed -i -e 's|<property name="Connect String"></property>|<property name="Connect String">'"${var.zookeeper-hostname}:2181"'</property>|'                        $${NIFI_STATE_FILE}
-  
 
         prop_replace 'nifi.security.keystore'                       "${var.nifi-path}/nifi-${var.nifi-version}/conf/keystore.jks"       "$${NIFI_CONFIG_FILE}"
         prop_replace 'nifi.security.keystoreType'                   "JKS"                                                               "$${NIFI_CONFIG_FILE}"
@@ -142,8 +150,8 @@ resource "google_compute_instance" "nifi" {
         prop_replace 'nifi.security.truststorePasswd'               "$${TRUSTSTORE_PASSWORD}"                                           "$${NIFI_CONFIG_FILE}"
         
         prop_replace 'nifi.sensitive.props.key'                     '${var.sensitivepropskey}'                                          "$${NIFI_CONFIG_FILE}"
-        prop_replace 'nifi.security.user.login.identity.provider'   ''                                                                  "$${NIFI_CONFIG_FILE}"
-        prop_replace 'nifi.security.user.authorizer'                'managed-authorizer'                                                "$${NIFI_CONFIG_FILE}"
+        prop_replace 'nifi.security.user.login.identity.provider'   'single-user-provider'                                                                  "$${NIFI_CONFIG_FILE}"
+        prop_replace 'nifi.security.user.authorizer'                'single-user-authorizer'                                                "$${NIFI_CONFIG_FILE}"
 
         prop_replace 'nifi.cluster.is.node'                         'true'                                                              "$${NIFI_CONFIG_FILE}"
         prop_replace 'nifi.cluster.protocol.is.secure'              'true'                                                              "$${NIFI_CONFIG_FILE}"
@@ -152,17 +160,15 @@ resource "google_compute_instance" "nifi" {
         prop_replace 'nifi.zookeeper.connect.string'                '${var.zookeeper-hostname}:2181'                                    "$${NIFI_CONFIG_FILE}"
         prop_replace 'nifi.cluster.flow.election.max.wait.time'     '30 sec'                                                            "$${NIFI_CONFIG_FILE}"
 
-        prop_replace 'nifi.flowfile.repository.directory'              '/mnt/disks/nifi-repo/flowfile_repository'                       "$${NIFI_CONFIG_FILE}"
-        prop_replace 'nifi.content.repository.directory.default'       '/mnt/disks/nifi-repo/content_repository'                        "$${NIFI_CONFIG_FILE}"
-        prop_replace 'nifi.provenance.repository.directory.default'    '/mnt/disks/nifi-repo/provenance_repository'                     "$${NIFI_CONFIG_FILE}"
-        prop_replace 'nifi.status.repository.questdb.persist.location' '/mnt/disks/nifi-repo/status_repository'                         "$${NIFI_CONFIG_FILE}"
-        prop_replace 'nifi.status.repository.questdb.persist.location' '/mnt/disks/nifi-repo/status_repository'                         "$${NIFI_CONFIG_FILE}"
-        #prop_replace 'nifi.queue.swap.threshold' '50000'                                                                               "$${NIFI_CONFIG_FILE}"
-        prop_replace 'nifi.provenance.repository.max.storage.time' '7 days'                                                             "$${NIFI_CONFIG_FILE}"
-        prop_replace 'nifi.cluster.node.connection.timeout' '10 sec'                                                                    "$${NIFI_CONFIG_FILE}"
-        prop_replace 'nifi.cluster.node.read.timeout' '10 sec'                                                                          "$${NIFI_CONFIG_FILE}"
-
-
+        prop_replace 'nifi.flowfile.repository.directory'              '/mnt/disks/nifi-repo/flowfile_repository'                          "$${NIFI_CONFIG_FILE}"
+        prop_replace 'nifi.content.repository.directory.default'       '/mnt/disks/nifi-repo/content_repository'                           "$${NIFI_CONFIG_FILE}"
+        prop_replace 'nifi.provenance.repository.directory.default'    '/mnt/disks/nifi-repo/provenance_repository'                        "$${NIFI_CONFIG_FILE}"
+        prop_replace 'nifi.status.repository.questdb.persist.location' '/mnt/disks/nifi-repo/status_repository'                            "$${NIFI_CONFIG_FILE}"
+        prop_replace 'nifi.status.repository.questdb.persist.location' '/mnt/disks/nifi-repo/status_repository'                            "$${NIFI_CONFIG_FILE}"
+        #prop_replace 'nifi.queue.swap.threshold' '50000'                                                                                  "$${NIFI_CONFIG_FILE}"
+        prop_replace 'nifi.provenance.repository.max.storage.time' '7 days'                                                                "$${NIFI_CONFIG_FILE}"
+        prop_replace 'nifi.cluster.node.connection.timeout' '10 sec'                                                                       "$${NIFI_CONFIG_FILE}"
+        prop_replace 'nifi.cluster.node.read.timeout' '10 sec'                                                                             "$${NIFI_CONFIG_FILE}"
         prop_replace 'java.arg.2'              '-Xms4g'                          "$${NIFI_BOOTSTRAP_FILE}"
         prop_replace 'java.arg.3'              '-Xmx4g'                          "$${NIFI_BOOTSTRAP_FILE}"
          
@@ -170,17 +176,18 @@ resource "google_compute_instance" "nifi" {
         sed -i -e 's|# nifi.security.identity.mapping.value.dn=.*|nifi.security.identity.mapping.value.dn=$1|'                                                          $${NIFI_CONFIG_FILE}
         sed -i -e 's|# nifi.security.identity.mapping.transform.dn=NONE|nifi.security.identity.mapping.transform.dn=NONE|'                                              $${NIFI_CONFIG_FILE}
         
-        sed -i -e 's|<property name="Initial User Identity 1"></property>|<property name="Initial User Identity 0">'"${var.bh-hostname}"'</property>|'                  $${NIFI_AUTHZ_FILE}
-        sed -i -e 's|<property name="Initial Admin Identity"></property>|<property name="Initial Admin Identity">'"${var.bh-hostname}"'</property>|'                    $${NIFI_AUTHZ_FILE}
+        sed -i -e 's|<property name="Initial User Identity 1"></property>|<property name="Initial User Identity 0">'"${var.username}"'</property>|'                  $${NIFI_AUTHZ_FILE}
+        #sed -i -e 's|<property name="Initial Admin Identity"></property>|<property name="Initial Admin Identity">'"${var.bh-hostname}"'</property>|'                    $${NIFI_AUTHZ_FILE}
         sed -i -e 's|<property name="Node Identity 1"></property>|<property name="Node Identity 1">'"${var.nifi-hostname}-1"'</property>|'                              $${NIFI_AUTHZ_FILE}
         
         for i in $(seq 2 ${var.instance-count-nifi}); do
             sed -i -e '/<property name="Node Identity 1">.*/a <property name="Node Identity '"$i"'">'"${var.nifi-hostname}-$i"'</property>'                             $${NIFI_AUTHZ_FILE}
         done
         for i in $(seq 1 ${var.instance-count-nifi}); do
-            sed -i -e '/<property name="Initial User Identity 0">.*/a <property name="Initial User Identity '"$i"'">'"nifi-$i"'</property>'                             $${NIFI_AUTHZ_FILE}
+            sed -i -e '/<property name="Initial User Identity 0">.*/a <property name="Initial User Identity '"$i"'">'"${var.nifi-hostname}-$i"'</property>'                             $${NIFI_AUTHZ_FILE}
         done
-
+        sed -i -e 's|</authorizer>| </authorizer> \n<authorizer> \n      <identifier>single-user-authorizer</identifier> \n      <class>org.apache.nifi.authorization.single.user.SingleUserAuthorizer</class>  \n </authorizer>  \n|'  $${NIFI_AUTHZ_FILE}
+        sed -i -e 's|</authorizers>|--> \n </authorizers>|'  $${NIFI_AUTHZ_FILE}
         head -n -11 $${NIFI_AUTHZ_FILE} > /tmp/authorizers.xml
         echo '</authorizers>' >> /tmp/authorizers.xml
         mv /tmp/authorizers.xml $${NIFI_AUTHZ_FILE}
@@ -190,7 +197,6 @@ resource "google_compute_instance" "nifi" {
         for i in $(seq 1 ${var.instance-count-zk}); do
             tmp+=${var.zookeeper-hostname}-$i:2181,
         done
-
         sed -i -e 's|<property name="Connect String">.*</property>|<property name="Connect String">'"$tmp"'</property>|'                        $${NIFI_STATE_FILE}
        
         prop_replace 'nifi.zookeeper.connect.string'     "$tmp"                                                                                 "$${NIFI_CONFIG_FILE}"
@@ -200,6 +206,7 @@ resource "google_compute_instance" "nifi" {
 
         gsutil -m cp -r ${var.nifi-bucket}/hdfs-site.xml ${var.nifi-path}/nifi-${var.nifi-version}/conf
         chown -R nifi:nifi ${var.nifi-path}/nifi-${var.nifi-version}/conf/hdfs-site.xml
+
         
         gsutil -m cp -r ${var.nifi-bucket}/flow.xml.gz ${var.nifi-path}/nifi-${var.nifi-version}/conf
         chown -R nifi:nifi ${var.nifi-path}/nifi-${var.nifi-version}/conf/flow.xml.gz
@@ -215,11 +222,12 @@ resource "google_compute_instance" "nifi" {
         gsutil -m cp -r ${var.nifi-bucket}/nifi-GetHDFSFileCheckSum-nar-1.15.3.nar ${var.nifi-path}/nifi-${var.nifi-version}/lib/
         chown -R nifi:nifi ${var.nifi-path}/nifi-${var.nifi-version}/lib/nifi-GetHDFSFileCheckSum-nar-1.15.3.nar
 
-        su nifi -c 'cd /home/nifi && bash ${var.nifi-path}/nifi-${var.nifi-version}/bin/nifi.sh start'
+        su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk-11/bin && cd /home/nifi && bash ${var.nifi-path}/nifi-${var.nifi-version}/bin/nifi.sh start'
         sleep 1m
         su nifi -c 'rm ${var.nifi-path}/nifi-${var.nifi-version}/conf/authorizations.xml ${var.nifi-path}/nifi-${var.nifi-version}/conf/users.xml'
-        su nifi -c 'cd /home/nifi && bash ${var.nifi-path}/nifi-${var.nifi-version}/bin/nifi.sh restart'
-    
+        su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk-11/bin && cd /home/nifi && bash ${var.nifi-path}/nifi-${var.nifi-version}/bin/nifi.sh set-single-user-credentials ${var.username} ${var.password}'
+        su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk-11/bin && cd /home/nifi && bash ${var.nifi-path}/nifi-${var.nifi-version}/bin/nifi.sh restart'
+      
         EOF
 }
 
