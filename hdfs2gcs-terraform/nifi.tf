@@ -68,10 +68,10 @@ resource "google_compute_instance" "nifi" {
   // Initial script running on all VM instances
   metadata_startup_script =   <<EOF
         if [[ "${var.image}" == *"centos"* ]]; then
-          gsutil cp  ${var.nifi-bucket}/unzip*.rpm /opt
+          gsutil cp  ${var.nifi-bucket}/binaries/unzip*.rpm /opt
           yum install /opt/unzip*.rpm -y 
         else 
-          gsutil cp  ${var.nifi-bucket}/unzip*.deb /opt
+          gsutil cp  ${var.nifi-bucket}/binaries/unzip*.deb /opt
           apt-get install /opt/unzip*.deb -y
         fi
       
@@ -108,7 +108,7 @@ resource "google_compute_instance" "nifi" {
         find ${var.nifi-path} -type f -iname "*.sh" -exec chmod +x {} \;
         
         echo "testing the connection"
-        until ping -c1 nifi-ca >/dev/null 2>&1; do :; done
+        until nc -z nifi-ca 9443 >/dev/null 2>&1; do :; done
         
         su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk-11/bin && cd ${var.nifi-path}/nifi-${var.nifi-version}/conf && ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh client  -c ${var.nifi-ca-hostname} -t ${var.ca-token} '
         until  ls ${var.nifi-path}/nifi-${var.nifi-version}/conf/config.json; do
