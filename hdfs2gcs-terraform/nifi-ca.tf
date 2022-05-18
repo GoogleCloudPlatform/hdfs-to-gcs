@@ -24,7 +24,7 @@ resource "google_compute_instance" "nifi-ca" {
     tags = ["nifi-ca"]
 
     service_account {
-        scopes = ["storage-ro"]
+        scopes = ["cloud-platform"]
     }
     
     boot_disk {
