@@ -49,7 +49,7 @@ variable "disk-size" {
 variable "image" {
     description = "Source disk image."
     type        = string
-    default     = "ubuntu-1804-bionic-v20220419" 
+    default     = "centos-7-v20220406" 
 }
 
 variable "instance-count-nifi" {
@@ -160,3 +160,15 @@ variable "bh-hostname" {
     type        = string
     default     = "bh-nifi"
 }
+
+variable "username" {
+     description = "The username used for NIFI user authorization"
+     type        = string
+     default     = "admin"
+}
+
+variable "password" {
+     description = "The password used for NIFI user authorization"
+     type        = string
+     default     = "admin123456789"
+ }

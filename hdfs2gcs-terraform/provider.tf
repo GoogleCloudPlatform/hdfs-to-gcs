@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// Provisioning resources required for NIFI HDFS to GCS solution on GCP
 
- // Provisioning resources required for NIFI HDFS to GCS solution on GCP
 provider "google" {
   credentials = "${file("./account.json")}"
   project     = var.project-id
