@@ -172,3 +172,9 @@ variable "password" {
      type        = string
      default     = "admin123456789"
  }
+
+ variable "jdkpackage" {
+     description = ""
+     type = string
+     default = "OpenJDK11U-jdk_x64_linux_hotspot_11.0.15_10.tar.gz"
+ }

@@ -62,14 +62,15 @@ resource "google_compute_instance" "zookeeper" {
             && chown -R zookeeper:zookeeper /opt/zookeeper \
             && chown -R zookeeper:zookeeper /var/lib/zookeeper 
             
-        mkdir -p /usr/lib/jvm
-        gsutil -m cp -r  ${var.nifi-bucket}/binaries/openjdk-11+28_linux-x64_bin.tar.gz /usr/lib/jvm/
-        cd /usr/lib/jvm/ && tar -xzvf openjdk-11+28_linux-x64_bin.tar.gz
-        rm /usr/lib/jvm//openjdk-11+28_linux-x64_bin.tar.gz
+        mkdir -p /usr/lib/jvm/tmp-jdk
+        gsutil -m cp -r  ${var.nifi-bucket}/binaries/${var.jdkpackage} /usr/lib/jvm/
+        cd /usr/lib/jvm/ && tar -xzvf ${var.jdkpackage} -C /usr/lib/jvm/
+        rm -f /usr/lib/jvm/${var.jdkpackage}
+        cp -R /usr/lib/jvm/jdk*/* /usr/lib/jvm/tmp-jdk && rm -R -f /usr/lib/jvm/jdk* && mv /usr/lib/jvm/tmp-jdk /usr/lib/jvm/jdk 
         chmod -R a+x  /usr/lib/jvm/
         chown -R zookeeper:zookeeper /usr/lib/jvm/
-        echo "export JAVA_HOME=/usr/lib/jvm/jdk-11" >> ~/.bashrc
-        echo "export PATH=$PATH:/usr/lib/jvm/jdk-11/bin" >> ~/.bashrc
+        echo "export JAVA_HOME=/usr/lib/jvm/jdk" >> ~/.bashrc
+        echo "export PATH=$PATH:/usr/lib/jvm/jdk/bin" >> ~/.bashrc
         chown -R zookeeper:zookeeper /opt/zookeeper/
         gsutil -m cp -r ${var.nifi-bucket}/binaries/apache-zookeeper-${var.zk-version}-bin.tar.gz /opt/zookeeper
         cd /opt/zookeeper && tar -xzvf /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin.tar.gz
@@ -91,7 +92,7 @@ resource "google_compute_instance" "zookeeper" {
             fi
         done
         chown -R zookeeper:zookeeper /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/
-        su zookeeper -c 'export PATH=$PATH:/usr/lib/jvm/jdk-11/bin && cd /home/zookeeper && /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/bin/zkServer.sh start'
+        su zookeeper -c 'export PATH=$PATH:/usr/lib/jvm/jdk/bin && cd /home/zookeeper && /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/bin/zkServer.sh start'
     
     EOF
 }

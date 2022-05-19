@@ -54,21 +54,22 @@ resource "google_compute_instance" "nifi-ca" {
             && useradd --shell /bin/bash -u $${NIFI_UID} -g $${NIFI_GID} -m nifi \
             && mkdir -p ${var.nifi-path} \
             
-        mkdir -p /usr/lib/jvm
-        gsutil -m cp -r  ${var.nifi-bucket}/binaries/openjdk-11+28_linux-x64_bin.tar.gz /usr/lib/jvm/
-        cd /usr/lib/jvm/ && tar -xzvf openjdk-11+28_linux-x64_bin.tar.gz
-        rm /usr/lib/jvm//openjdk-11+28_linux-x64_bin.tar.gz
+        mkdir -p /usr/lib/jvm/tmp-jdk
+        gsutil -m cp -r  ${var.nifi-bucket}/binaries/${var.jdkpackage} /usr/lib/jvm/
+        cd /usr/lib/jvm/ && tar -xzvf ${var.jdkpackage} -C /usr/lib/jvm/
+        rm -f /usr/lib/jvm/${var.jdkpackage}
+        cp -R /usr/lib/jvm/jdk*/* /usr/lib/jvm/tmp-jdk && rm -R -f /usr/lib/jvm/jdk* && mv /usr/lib/jvm/tmp-jdk /usr/lib/jvm/jdk 
         chmod -R a+x  /usr/lib/jvm/
         chown -R nifi:nifi /usr/lib/jvm/
-        echo "export JAVA_HOME=/usr/lib/jvm/jdk-11" >> ~/.bashrc
-        echo "export PATH=$PATH:/usr/lib/jvm/jdk-11/bin" >> ~/.bashrc
+        echo "export JAVA_HOME=/usr/lib/jvm/jdk" >> ~/.bashrc
+        echo "export PATH=$PATH:/usr/lib/jvm/jdk/bin" >> ~/.bashrc
         gsutil cp ${var.nifi-bucket}/binaries/nifi-toolkit-${var.nifi-version}-bin.zip ${var.nifi-path}
         unzip ${var.nifi-path}/nifi-toolkit-${var.nifi-version}-bin.zip -d ${var.nifi-path}
         rm ${var.nifi-path}/nifi-toolkit-${var.nifi-version}-bin.zip
         chown nifi:nifi -R ${var.nifi-path}/*
         find ${var.nifi-path} -type f -iname "*.sh" -exec chmod +x {} \;
 
-        su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk-11/bin && cd /home/nifi && ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh server -c ${var.nifi-ca-hostname} -t ${var.ca-token} &'
+        su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk/bin && cd /home/nifi && ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh server -c ${var.nifi-ca-hostname} -t ${var.ca-token} &'
         
 
     EOF
