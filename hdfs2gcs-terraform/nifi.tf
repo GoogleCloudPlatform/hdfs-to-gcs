@@ -86,15 +86,16 @@ resource "google_compute_instance" "nifi" {
             && mkdir -p ${var.nifi-path} \
             
         chown -R nifi:nifi /mnt/disks/nifi-repo
-        mkdir -p /usr/lib/jvm
-        gsutil -m cp -r  ${var.nifi-bucket}/binaries/openjdk-11+28_linux-x64_bin.tar.gz /usr/lib/jvm/
-        cd /usr/lib/jvm/ && tar -xzvf openjdk-11+28_linux-x64_bin.tar.gz
-        rm /usr/lib/jvm//openjdk-11+28_linux-x64_bin.tar.gz
+        mkdir -p /usr/lib/jvm/tmp-jdk
+        gsutil -m cp -r  ${var.nifi-bucket}/binaries/${var.jdkpackage} /usr/lib/jvm/
+        cd /usr/lib/jvm/ && tar -xzvf ${var.jdkpackage} -C /usr/lib/jvm/
+        rm -f /usr/lib/jvm/${var.jdkpackage}
+        cp -R /usr/lib/jvm/jdk*/* /usr/lib/jvm/tmp-jdk && rm -R -f /usr/lib/jvm/jdk* && mv /usr/lib/jvm/tmp-jdk /usr/lib/jvm/jdk 
 
         chmod -R a+x  /usr/lib/jvm/
         chown -R nifi:nifi /usr/lib/jvm/
-        su nifi -c 'echo "export JAVA_HOME=/usr/lib/jvm/jdk-11" >> ~/.bashrc'
-        su nifi -c 'echo "export PATH=$PATH:/usr/lib/jvm/jdk-11/bin" >> ~/.bashrc'
+        su nifi -c 'echo "export JAVA_HOME=/usr/lib/jvm/jdk" >> ~/.bashrc'
+        su nifi -c 'echo "export PATH=$PATH:/usr/lib/jvm/jdk/bin" >> ~/.bashrc'
         
         gsutil cp  ${var.nifi-bucket}/binaries/nifi-${var.nifi-version}-bin.zip ${var.nifi-path}
         unzip ${var.nifi-path}/nifi-${var.nifi-version}-bin.zip -d ${var.nifi-path}
@@ -110,7 +111,7 @@ resource "google_compute_instance" "nifi" {
         echo "testing the connection"
         until nc -z nifi-ca 9443 >/dev/null 2>&1; do :; done
         
-        su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk-11/bin && cd ${var.nifi-path}/nifi-${var.nifi-version}/conf && ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh client  -c ${var.nifi-ca-hostname} -t ${var.ca-token} '
+        su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk/bin && cd ${var.nifi-path}/nifi-${var.nifi-version}/conf && ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh client  -c ${var.nifi-ca-hostname} -t ${var.ca-token} '
         until  ls ${var.nifi-path}/nifi-${var.nifi-version}/conf/config.json; do
         sleep 1
         done
@@ -118,9 +119,9 @@ resource "google_compute_instance" "nifi" {
         KEY_PASSWORD=`cat ${var.nifi-path}/nifi-${var.nifi-version}/conf/config.json | grep -o '"keyPassword" : "[^"]*' | grep -o '[^"]*$'`
         TRUSTSTORE_PASSWORD=`cat ${var.nifi-path}/nifi-${var.nifi-version}/conf/config.json | grep -o '"trustStorePassword" : "[^"]*' | grep -o '[^"]*$'`
 
-        export PATH=$PATH:/usr/lib/jvm/jdk-11/bin && keytool -storepasswd -new ${var.cert-password} -keystore ${var.nifi-path}/nifi-${var.nifi-version}/conf/keystore.jks -storepass $KEYSTORE_PASSWORD
-        export PATH=$PATH:/usr/lib/jvm/jdk-11/bin && keytool -storepasswd -new ${var.cert-password} -keystore ${var.nifi-path}/nifi-${var.nifi-version}/conf/truststore.jks -storepass $TRUSTSTORE_PASSWORD
-        export PATH=$PATH:/usr/lib/jvm/jdk-11/bin && keytool -keypasswd  -alias nifi-key  -keystore  ${var.nifi-path}/nifi-${var.nifi-version}/conf/keystore.jks -storepass ${var.cert-password} -keypass $KEY_PASSWORD -new ${var.cert-password}
+        export PATH=$PATH:/usr/lib/jvm/jdk/bin && keytool -storepasswd -new ${var.cert-password} -keystore ${var.nifi-path}/nifi-${var.nifi-version}/conf/keystore.jks -storepass $KEYSTORE_PASSWORD
+        export PATH=$PATH:/usr/lib/jvm/jdk/bin && keytool -storepasswd -new ${var.cert-password} -keystore ${var.nifi-path}/nifi-${var.nifi-version}/conf/truststore.jks -storepass $TRUSTSTORE_PASSWORD
+        export PATH=$PATH:/usr/lib/jvm/jdk/bin && keytool -keypasswd  -alias nifi-key  -keystore  ${var.nifi-path}/nifi-${var.nifi-version}/conf/keystore.jks -storepass ${var.cert-password} -keypass $KEY_PASSWORD -new ${var.cert-password}
         prop_replace () {
             sed -i -e "s|^$1=.*$|$1=$2|"  $3
         }
@@ -221,10 +222,10 @@ resource "google_compute_instance" "nifi" {
         gsutil -m cp -r ${var.nifi-bucket}/nifi-GetHDFSFileCheckSum-nar-1.15.3.nar ${var.nifi-path}/nifi-${var.nifi-version}/lib/
         chown -R nifi:nifi ${var.nifi-path}/nifi-${var.nifi-version}/lib/nifi-GetHDFSFileCheckSum-nar-1.15.3.nar
 
-        su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk-11/bin && cd /home/nifi && bash ${var.nifi-path}/nifi-${var.nifi-version}/bin/nifi.sh start'
+        su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk/bin && cd /home/nifi && bash ${var.nifi-path}/nifi-${var.nifi-version}/bin/nifi.sh start'
         sleep 1m
         su nifi -c 'rm ${var.nifi-path}/nifi-${var.nifi-version}/conf/authorizations.xml ${var.nifi-path}/nifi-${var.nifi-version}/conf/users.xml'
-        su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk-11/bin && cd /home/nifi && bash ${var.nifi-path}/nifi-${var.nifi-version}/bin/nifi.sh restart'
+        su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk/bin && cd /home/nifi && bash ${var.nifi-path}/nifi-${var.nifi-version}/bin/nifi.sh restart'
       
         EOF
 }
