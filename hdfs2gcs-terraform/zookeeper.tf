@@ -44,43 +44,47 @@ resource "google_compute_instance" "zookeeper" {
     }
 
     metadata_startup_script =   <<EOF
+        if [[ ! -f /opt/startup-script-finished.txt ]]
+        then 
 
-        if [[ "${var.image}" == *"centos"* ]]; then 
-            yum install  unzip  java-11-openjdk-devel -y
-        else 
-            apt-get update && apt-get install   unzip  openjdk-11-jdk -y
-        fi
-        
-        ZOOK_UID=10000
-        ZOOK_GID=10000
-
-        groupadd -g $${ZOOK_GID} zookeeper || groupmod -n zookeeper `getent group $${ZOOK_GID} | cut -d: -f1` \
-            && useradd --shell /bin/bash -u $${ZOOK_UID} -g $${ZOOK_GID} -m zookeeper \
-            && mkdir -p /opt/zookeeper \
-            && mkdir -p /var/lib/zookeeper \
-            && echo ${count.index + 1} > /var/lib/zookeeper/myid \
-            && chown -R zookeeper:zookeeper /opt/zookeeper \
-            && chown -R zookeeper:zookeeper /var/lib/zookeeper 
-            
-        su zookeeper -c 'curl -fSL https://downloads.apache.org/zookeeper/zookeeper-${var.zk-version}/apache-zookeeper-${var.zk-version}-bin.tar.gz -o /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin.tar.gz'
-        chown -R zookeeper:zookeeper /opt/zookeeper/
-        su zookeeper -c 'cd /opt/zookeeper && tar -xzvf /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin.tar.gz'
-        su zookeeper -c 'rm /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin.tar.gz'
-        echo "tickTime=2000" > /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
-        echo "dataDir=/var/lib/zookeeper" >> /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
-        echo "clientPort=2181" >> /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
-        echo "initLimit=5" >> /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
-        echo "syncLimit=2" >> /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
-        echo ${count.index + 1}
-        echo "here was test"
-        for i in $(seq 1 ${var.instance-count-zk}); do
-            if [[ $i == ${count.index + 1} ]]; then
-                echo "server.$i=0.0.0.0:2888:3888" >> /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
-            else
-                echo "server.$i=${var.zookeeper-hostname}-$i:2888:3888" >> /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
+            if [[ "${var.image}" == *"centos"* ]]; then 
+                yum install  unzip  java-11-openjdk-devel -y
+            else 
+                apt-get update && apt-get install   unzip  openjdk-11-jdk -y
             fi
-        done
-        chown zookeeper:zookeeper /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
+            
+            ZOOK_UID=10000
+            ZOOK_GID=10000
+
+            groupadd -g $${ZOOK_GID} zookeeper || groupmod -n zookeeper `getent group $${ZOOK_GID} | cut -d: -f1` \
+                && useradd --shell /bin/bash -u $${ZOOK_UID} -g $${ZOOK_GID} -m zookeeper \
+                && mkdir -p /opt/zookeeper \
+                && mkdir -p /var/lib/zookeeper \
+                && echo ${count.index + 1} > /var/lib/zookeeper/myid \
+                && chown -R zookeeper:zookeeper /opt/zookeeper \
+                && chown -R zookeeper:zookeeper /var/lib/zookeeper 
+                
+            su zookeeper -c 'curl -fSL https://downloads.apache.org/zookeeper/zookeeper-${var.zk-version}/apache-zookeeper-${var.zk-version}-bin.tar.gz -o /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin.tar.gz'
+            chown -R zookeeper:zookeeper /opt/zookeeper/
+            su zookeeper -c 'cd /opt/zookeeper && tar -xzvf /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin.tar.gz'
+            su zookeeper -c 'rm /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin.tar.gz'
+            echo "tickTime=2000" > /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
+            echo "dataDir=/var/lib/zookeeper" >> /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
+            echo "clientPort=2181" >> /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
+            echo "initLimit=5" >> /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
+            echo "syncLimit=2" >> /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
+            echo ${count.index + 1}
+            echo "here was test"
+            for i in $(seq 1 ${var.instance-count-zk}); do
+                if [[ $i == ${count.index + 1} ]]; then
+                    echo "server.$i=0.0.0.0:2888:3888" >> /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
+                else
+                    echo "server.$i=${var.zookeeper-hostname}-$i:2888:3888" >> /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
+                fi
+            done
+            chown zookeeper:zookeeper /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
+        touch /opt/startup-script-finished.txt && echo "the startup script run once" > /opt/startup-script-finished.txt
+        fi
         su zookeeper -c 'cd /home/zookeeper && /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/bin/zkServer.sh start'
     
     EOF
