@@ -234,8 +234,6 @@ resource "google_compute_instance" "nifi" {
           su nifi -c 'rm ${var.nifi-path}/nifi-${var.nifi-version}/conf/authorizations.xml ${var.nifi-path}/nifi-${var.nifi-version}/conf/users.xml'
           su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk/bin && cd /home/nifi && bash ${var.nifi-path}/nifi-${var.nifi-version}/bin/nifi.sh set-single-user-credentials ${var.username} ${var.password}'
           touch /opt/startup-script-finished.txt && echo "the startup script run once" > /opt/startup-script-finished.txt
-        #else
-        #   mount -o discard,defaults /dev/sdb /mnt/disks/nifi-repo
         fi
         su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk/bin && cd /home/nifi && bash ${var.nifi-path}/nifi-${var.nifi-version}/bin/nifi.sh restart'
       
