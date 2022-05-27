@@ -71,8 +71,11 @@ resource "google_compute_instance" "nifi" {
         if [[ ! -f /opt/startup-script-finished.txt ]]
         then 
           mkdir -p /mnt/disks/nifi-repo
-          mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/sdb
-          mount -o discard,defaults /dev/sdb /mnt/disks/nifi-repo
+          disk_name="/dev/$(basename $(readlink /dev/disk/by-id/google-${element(google_compute_disk.nifi-disk-.*.name, count.index)}))"
+          mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard $disk_name
+          mount -o discard,defaults $disk_name /mnt/disks/nifi-repo
+          sleep 2
+          echo UUID=$(sudo blkid -s UUID -o value $disk_name) /mnt/disks/nifi-repo ext4 discard,defaults,nofail 0 2 | sudo tee -a /etc/fstab
 
           if [[ "${var.image}" == *"centos"* ]]; then
             gsutil cp  ${var.nifi-bucket}/binaries/unzip*.rpm /opt
@@ -231,8 +234,6 @@ resource "google_compute_instance" "nifi" {
           su nifi -c 'rm ${var.nifi-path}/nifi-${var.nifi-version}/conf/authorizations.xml ${var.nifi-path}/nifi-${var.nifi-version}/conf/users.xml'
           su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk/bin && cd /home/nifi && bash ${var.nifi-path}/nifi-${var.nifi-version}/bin/nifi.sh set-single-user-credentials ${var.username} ${var.password}'
           touch /opt/startup-script-finished.txt && echo "the startup script run once" > /opt/startup-script-finished.txt
-        else
-           mount -o discard,defaults /dev/sdb /mnt/disks/nifi-repo
         fi
         su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk/bin && cd /home/nifi && bash ${var.nifi-path}/nifi-${var.nifi-version}/bin/nifi.sh restart'
       
