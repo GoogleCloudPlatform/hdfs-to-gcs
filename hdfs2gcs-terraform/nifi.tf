@@ -115,7 +115,7 @@ resource "google_compute_instance" "nifi" {
           find ${var.nifi-path} -type f -iname "*.sh" -exec chmod +x {} \;
           
           echo "testing the connection"
-          until ping -c1 nifi-ca >/dev/null 2>&1; do :; done
+          until nc -z nifi-ca 9443 >/dev/null 2>&1; do :; done
           
           su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk/bin && cd ${var.nifi-path}/nifi-${var.nifi-version}/conf && ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh client  -c ${var.nifi-ca-hostname} -t ${var.ca-token} '
           until  ls ${var.nifi-path}/nifi-${var.nifi-version}/conf/config.json; do
