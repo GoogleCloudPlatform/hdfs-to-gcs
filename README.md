@@ -54,7 +54,7 @@ This repository contains Terraform scripts to deploy HDFS to GCS transfer soluti
     | errmsg         | STRING  | error message       |
     | timemillis     | INTEGER | timestamp in millis |
 
-    ### Table name: hdfs_gcp_failures
+    ### Table name: hdfs_gcp_transfer_rate
     ### Schema:
 
     | Field name | Type    | Description                                                    |
