@@ -1,5 +1,5 @@
 # HDFS to GCS (HDFS2GCS)  
-This repository contains Terraform scripts to deploy HDFS to GCS transfer solution. 
+A complete end to end solution to migrate data from traditional Hadoop clusters to Google Cloud Storage while providing a managed, fault tolerant, seamless experience. Solution is configurable/ customizable and has support for tracking, error handling, throttling, security, validation and monitoring.
 
 ## Features
 - Support for large data transfers from HDFS to GCS
@@ -15,6 +15,8 @@ This repository contains Terraform scripts to deploy HDFS to GCS transfer soluti
 - Support for Push & Pull model
 - Highly configurable
 
+## Supported Distributions
+The full solution, including the use of crc32c checksums for transfer validation, is tested with Apache Hadoop 2.10 onwards, which corresponds to Hortonworks 3+ and Cloudera Data Hub 5+. However, the solution supports the transfer of data from earlier distributions of Hadoop without support for crc32c checksum.
 
 ## Prerequisits
 1. GCP Service account with following permission to deploy the tool for Pull Mode
