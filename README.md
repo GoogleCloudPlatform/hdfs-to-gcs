@@ -1,6 +1,9 @@
 # HDFS to GCS (HDFS2GCS)  
 This repository contains Terraform scripts to deploy HDFS to GCS transfer solution. 
 
+
+<img src="./images/diagram.jpg" alt="drawing" width="600"/>
+
 ## Features
 - Support for large data transfers from HDFS to GCS
 - Support for incremental/delta loads
@@ -66,6 +69,7 @@ This repository contains Terraform scripts to deploy HDFS to GCS transfer soluti
 
 7. PubSub topic for handling failures
 8. PubSub Subscription so that tool can replay failures.
+9. Minimum hardware requirment is VMs with 4G memory 
 
 ## Deployment 
 [Follow this guide for the deployment](./hdfs2gcs-terraform/README.md)
@@ -73,6 +77,8 @@ This repository contains Terraform scripts to deploy HDFS to GCS transfer soluti
 
 ## Setup Hdfs to GCS transfer process
 Once you lunch the NIFI web UI, modify below parameters and controller services.
+
+<img src="./images/flow.jpg" alt="drawing" width="600"/>
 
 ## Parameters
 
@@ -95,5 +101,10 @@ Once you lunch the NIFI web UI, modify below parameters and controller services.
 
 - GCPCredentialsControllerService : Set the path to service account credential file to access GCP resources (GCS, BigQuery, PubSub) in the flow.
 - StandardRestrictedSSLContextService : Provide keystore/truststore settings to call NiFi rest api with secure SSL mechanism.
+
+## Performance
+You can create dashboards to visualize the data from BigQuery tables.
+
+<img src="./images/dashboard.jpg" alt="drawing" width="600"/>
 
 
