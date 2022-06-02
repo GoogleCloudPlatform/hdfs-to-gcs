@@ -99,8 +99,8 @@ resource "google_compute_instance" "nifi" {
           su nifi -c 'curl -fSL https://archive.apache.org/dist/nifi/${var.nifi-version}/nifi-toolkit-${var.nifi-version}-bin.zip -o ${var.nifi-path}/nifi-toolkit-${var.nifi-version}-bin.zip'
           su nifi -c 'unzip ${var.nifi-path}/nifi-toolkit-${var.nifi-version}-bin.zip -d ${var.nifi-path}'
           su nifi -c 'rm ${var.nifi-path}/nifi-toolkit-${var.nifi-version}-bin.zip'
-          echo "testing the connection"
-          until nc -z nifi-ca 9443 >/dev/null 2>&1; do :; done
+          echo "waiting for CA server"
+          sleep 2
           
           su nifi -c 'cd ${var.nifi-path}/nifi-${var.nifi-version}/conf && ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh client  -c ${var.nifi-ca-hostname} -t ${var.ca-token} '
           until  ls ${var.nifi-path}/nifi-${var.nifi-version}/conf/config.json; do
