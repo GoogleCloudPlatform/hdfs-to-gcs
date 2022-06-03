@@ -74,8 +74,5 @@ resource "google_compute_instance" "nifi-ca" {
             touch /opt/startup-script-finished.txt && echo "the startup script run once" > /opt/startup-script-finished.txt
         fi
 
-        
-        
-
     EOF
 }
