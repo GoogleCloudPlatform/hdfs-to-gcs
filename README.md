@@ -1,8 +1,8 @@
 # HDFS to GCS (HDFS2GCS)  
 A complete end to end solution to migrate data from traditional Hadoop clusters to Google Cloud Storage while providing a managed, fault tolerant, seamless experience. Solution is configurable/ customizable and has support for tracking, error handling, throttling, security, validation and monitoring.
 
-
 <img src="./images/diagram.jpg" alt="drawing" width="600"/>
+
 
 ## Features
 - Support for large data transfers from HDFS to GCS
