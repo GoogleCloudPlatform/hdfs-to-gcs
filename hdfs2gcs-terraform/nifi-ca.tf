@@ -60,19 +60,18 @@ resource "google_compute_instance" "nifi-ca" {
             su nifi -c 'curl -fSL https://archive.apache.org/dist/nifi/${var.nifi-version}/nifi-toolkit-${var.nifi-version}-bin.zip -o ${var.nifi-path}/nifi-toolkit-${var.nifi-version}-bin.zip'
             su nifi -c 'unzip ${var.nifi-path}/nifi-toolkit-${var.nifi-version}-bin.zip -d ${var.nifi-path}'
             su nifi -c 'rm ${var.nifi-path}/nifi-toolkit-${var.nifi-version}-bin.zip'
+            su nifi -c 'cd /home/nifi && ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh server -c ${var.nifi-ca-hostname} -t ${var.ca-token} &'
+            sleep 1
+            cd /root
+            ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh client -D CN=${var.bh-hostname},OU=NIFI -c ${var.nifi-ca-hostname} -t ${var.ca-token}
+            KEYSTORE_PASSWORD=`cat config.json | grep -o '"keyStorePassword" : "[^"]*' | grep -o '[^"]*$'`
+            KEY_PASSWORD=`cat config.json | grep -o '"keyPassword" : "[^"]*' | grep -o '[^"]*$'`
+            keytool -importkeystore -srckeystore keystore.jks -destkeystore keystore.p12 -srcstoretype jks -deststoretype pkcs12 -deststorepass $KEYSTORE_PASSWORD -srcstorepass $KEYSTORE_PASSWORD
+            gsutil cp keystore.p12  ${var.nifi-bucket}/bastionhost/
+            gsutil cp config.json ${var.nifi-bucket}/bastionhost/
+            rm nifi-cert.pem truststore.jks keystore.jks keystore.p12  config.json
             touch /opt/startup-script-finished.txt && echo "the startup script run once" > /opt/startup-script-finished.txt
         fi
-        su nifi -c 'cd /home/nifi && ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh server -c ${var.nifi-ca-hostname} -t ${var.ca-token} &'
-        sleep 10
-        cd /root
-        ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh client -D CN=${var.bh-hostname},OU=NIFI -c ${var.nifi-ca-hostname} -t ${var.ca-token}
-        KEYSTORE_PASSWORD=`cat config.json | grep -o '"keyStorePassword" : "[^"]*' | grep -o '[^"]*$'`
-        KEY_PASSWORD=`cat config.json | grep -o '"keyPassword" : "[^"]*' | grep -o '[^"]*$'`
-        keytool -importkeystore -srckeystore keystore.jks -destkeystore keystore.p12 -srcstoretype jks -deststoretype pkcs12 -deststorepass $KEYSTORE_PASSWORD -srcstorepass $KEYSTORE_PASSWORD
-
-        gsutil cp keystore.p12  ${var.nifi-bucket}/bastionhost/
-        gsutil cp config.json ${var.nifi-bucket}/bastionhost/
-        rm nifi-cert.pem truststore.jks keystore.jks keystore.p12  config.json
-     
+        
     EOF
 }
