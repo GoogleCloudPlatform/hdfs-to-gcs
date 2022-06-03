@@ -3,6 +3,7 @@ A complete end to end solution to migrate data from traditional Hadoop clusters 
 
 <img src="./images/diagram.jpg" alt="drawing" width="600"/>
 
+
 ## Features
 - Support for large data transfers from HDFS to GCS
 - Support for incremental/delta loads
@@ -19,7 +20,7 @@ A complete end to end solution to migrate data from traditional Hadoop clusters 
 
 ## Supported Distributions
 The full solution, including the use of crc32c checksums for transfer validation, is tested with Apache Hadoop 2.10 onwards, which corresponds to Hortonworks 3+ and Cloudera Data Hub 5+. However, the solution supports the transfer of data from earlier distributions of Hadoop without support for crc32c checksum.
- 
+
 ## Prerequisites
 1. GCP Service account with following permission to deploy the tool for Pull Mode
 	- Service account user role to use service compute role
