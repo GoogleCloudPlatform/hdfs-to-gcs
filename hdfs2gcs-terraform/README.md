@@ -25,7 +25,7 @@ gcloud config set project PROJECT_ID
    
 4. Ensure to modify the default values in variable.tf for parameters "ca-token", "sensitivepropskey" , "cert-password". Note that the default region and zone in variable.tf is "us-west1" and "us-west1-a". You may want to modify them to deploy in another area available within GCP. You also can change other default values such as machine-type, instance number, IPs and hostname for cluster instances.
    
-5. In case of using an exisiting network, remove the network.tf and firewall.tf scripts from the repositoriy and modify the "network_interface" block in nifi.tf, nifi-ca.tf and zookeeper.tf scripts to include your existing network and subnetwork name. 
+5. In case of using an exisiting network, remove the network.tf and firewall.tf scripts from the repositoriy and modify the "network_interface" block in nifi.tf, nifi-ca.tf and zookeeper.tf scripts to include your existing network and subnetwork name. Make sure to open port 8443 and enable [Private Google Access](https://cloud.google.com/vpc/docs/configure-private-google-access) on your subnet.
 
 6. Run the run.sh script with the GCS bucket name as the input arguments. It may take time for the binaries to be downloaded and pushed to GCS bucket.
 ```                                              

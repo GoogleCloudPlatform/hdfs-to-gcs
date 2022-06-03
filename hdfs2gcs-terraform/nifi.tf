@@ -55,7 +55,7 @@ resource "google_compute_instance" "nifi" {
   tags = ["nifi-host"]
 
   service_account {
-        scopes = ["storage-ro", "cloud-platform"]
+        scopes = ["cloud-platform"]
     }
   network_interface {
     network            = google_compute_network.default.name
@@ -234,9 +234,9 @@ resource "google_compute_instance" "nifi" {
         touch /opt/startup-script-finished.txt && echo "the startup script run once" > /opt/startup-script-finished.txt
     
       fi
-        su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk/bin && cd /home/nifi && bash ${var.nifi-path}/nifi-${var.nifi-version}/bin/nifi.sh restart'
+      su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk/bin && cd /home/nifi && bash ${var.nifi-path}/nifi-${var.nifi-version}/bin/nifi.sh restart'
       
-        EOF
+      EOF
 }
 
 
