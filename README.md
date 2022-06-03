@@ -105,3 +105,5 @@ Once you lunch the NIFI web UI, modify below parameters and controller services.
 
 ## Performance
 You can create dashboards to visualize the data from BigQuery tables.
+
+<img src="./images/dashboard.jpg" alt="drawing" width="600"/>
