@@ -83,7 +83,7 @@ resource "google_compute_instance" "zookeeper" {
                 fi
             done
             chown zookeeper:zookeeper /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/conf/zoo.cfg
-        touch /opt/startup-script-finished.txt && echo "the startup script run once" > /opt/startup-script-finished.txt
+            touch /opt/startup-script-finished.txt && echo "the startup script run once" > /opt/startup-script-finished.txt
         fi
         su zookeeper -c 'cd /home/zookeeper && /opt/zookeeper/apache-zookeeper-${var.zk-version}-bin/bin/zkServer.sh start'
     
