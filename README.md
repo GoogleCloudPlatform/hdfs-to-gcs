@@ -1,6 +1,9 @@
 # HDFS to GCS (HDFS2GCS)  
 A complete end to end solution to migrate data from traditional Hadoop clusters to Google Cloud Storage while providing a managed, fault tolerant, seamless experience. Solution is configurable/ customizable and has support for tracking, error handling, throttling, security, validation and monitoring.
 
+<img src="./images/diagram.jpg" alt="drawing" width="600"/>
+
+
 ## Features
 - Support for large data transfers from HDFS to GCS
 - Support for incremental/delta loads
@@ -68,6 +71,7 @@ The full solution, including the use of crc32c checksums for transfer validation
 
 7. PubSub topic for handling failures
 8. PubSub Subscription so that tool can replay failures.
+9. Minimum hardware requirment is VMs with 4G memory 
 
 ## Deployment 
 [Follow this guide for the deployment](./hdfs2gcs-terraform/README.md)
@@ -75,6 +79,8 @@ The full solution, including the use of crc32c checksums for transfer validation
 
 ## Setup Hdfs to GCS transfer process
 Once you lunch the NIFI web UI, modify below parameters and controller services.
+
+<img src="./images/flow.jpg" alt="drawing" width="600"/>
 
 ## Parameters
 
@@ -97,3 +103,8 @@ Once you lunch the NIFI web UI, modify below parameters and controller services.
 
 - GCPCredentialsControllerService : Set the path to service account credential file to access GCP resources (GCS, BigQuery, PubSub) in the flow.
 - StandardRestrictedSSLContextService : Provide keystore/truststore settings to call NiFi rest api with secure SSL mechanism.
+
+## Performance
+You can create dashboards to visualize the data from BigQuery tables.
+
+<img src="./images/dashboard.jpg" alt="drawing" width="600"/>
