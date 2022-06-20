@@ -1,7 +1,9 @@
 # HDFS to GCS (HDFS2GCS)  
 A complete end to end solution to migrate data from traditional Hadoop clusters to Google Cloud Storage while providing a managed, fault tolerant, seamless experience. Solution is configurable/ customizable and has support for tracking, error handling, throttling, security, validation and monitoring.
 
-<img src="./images/diagram.jpg" alt="drawing" width="600"/>
+## High level architecture 
+
+<img src="./images/diagram.png" alt="drawing" width="1000"/>
 
 
 ## Features
@@ -31,6 +33,15 @@ The full solution, including the use of crc32c checksums for transfer validation
 	- Storage Admin role to create GCS buckets and objects
 3. Account having access to DataStudio for dashboarding
 4. Firewall rules/ports to open connectivity between on-prem cluster and GCE VMs
+    |        Node        | Port |            Configuration            |
+    |--------------------|------|-------------------------------------|
+    | NameNode           | 8020 | fs.defaultFS or fs.default.name     |
+    | NameNode           | 9870 | dfs.namenode.http-address           |
+    | Secondary-NameNode | 9868 | dfs.namenode.secondary.http-address |
+    | DataNode           | 9866 | dfs.datanode.address                |
+    | DataNode           | 9865 | dfs.datanode.https.address          |
+    | DataNode           | 9867 | dfs.datanode.ipc.address            |
+
 5. Access to hadoop cluster to list and fetch files present in HDFS
 	- core-site.xml
 	- hdfs-site.xml
@@ -71,7 +82,14 @@ The full solution, including the use of crc32c checksums for transfer validation
 
 7. PubSub topic for handling failures
 8. PubSub Subscription so that tool can replay failures.
-9. Minimum hardware requirment is VMs with 4G memory 
+9. Minimum hardware requirment is VMs with 4G memory. 
+    -   Hardware Recommendation: 
+        - Use persistent SSD disk types with 1024 GB capacity for large IOps. This is required since NiFi keeps flow related data in these disks and access that frequently.
+        - Use high cpu compute instances for NiFi to get better performance.
+        - Since ListHDFS stores files metadata in Heap, it is recommended to have a sufficient heap for a large number of files(Heap settings are in nifi.tf file). E.g. if we are transferring 5 million files, we may need ~25GB heap for each NiFi node. So, Select the machine type with sufficient memory to allocate the required heap.
+        - Zookeeper and ca host can be very small.
+        - We have tried this solution with “debian-10-buster-v20220406”, “centos-7-v20220406” and "ubuntu-1804-bionic-v20220419" images. 
+
 
 ## Deployment 
 [Follow this guide for the deployment](./hdfs2gcs-terraform/README.md)
