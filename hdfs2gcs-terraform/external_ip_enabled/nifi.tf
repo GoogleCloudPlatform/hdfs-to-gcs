@@ -163,9 +163,9 @@ resource "google_compute_instance" "nifi" {
           prop_replace 'nifi.status.repository.questdb.persist.location' '/mnt/disks/nifi-repo/status_repository'                         "$${NIFI_CONFIG_FILE}"
           #prop_replace 'nifi.queue.swap.threshold' '50000'                                                                               "$${NIFI_CONFIG_FILE}"
           prop_replace 'nifi.provenance.repository.max.storage.time' '7 days'                                                             "$${NIFI_CONFIG_FILE}"
-          prop_replace 'nifi.cluster.node.connection.timeout' '10 sec'                                                                    "$${NIFI_CONFIG_FILE}"
-          prop_replace 'nifi.cluster.node.read.timeout' '10 sec'                                                                          "$${NIFI_CONFIG_FILE}"
-
+          prop_replace 'nifi.cluster.node.connection.timeout' '30 sec'                                                                    "$${NIFI_CONFIG_FILE}"
+          prop_replace 'nifi.cluster.node.read.timeout' '30 sec'                                                                          "$${NIFI_CONFIG_FILE}"
+          prep_replace 'nifi.cluster.load.balance.connections.per.node' '5'                                                               "$${NIFI_CONFIG_FILE}"
 
           prop_replace 'java.arg.2'              '-Xms4g'                          "$${NIFI_BOOTSTRAP_FILE}"
           prop_replace 'java.arg.3'              '-Xmx4g'                          "$${NIFI_BOOTSTRAP_FILE}"
