@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// This file creates VPC network and subnetwork with provided cidr range
 
- // This file creates VPC network and subnetwork with provided cidr range
 
-// Creating VPC network 
+// Creating VPC network
 resource "google_compute_network" "default" {
   name                    = var.network-name
   auto_create_subnetworks = "false"
@@ -27,6 +27,7 @@ resource "google_compute_subnetwork" "default" {
   name                     = "${var.network-name}-subnet"
   ip_cidr_range            = var.network-ip-cidr-range
   network                  = google_compute_network.default.self_link
+
   region                   = var.region
   private_ip_google_access = true
 }

@@ -19,19 +19,19 @@
 variable "project-id" {
     description = "The GCP project to use for integration tests"
     type        = string
-    default     = "test-sandbox"
+    default     = "safshari-sandbox"
 }
 
 variable "region" {
     description = "The GCP region to create and test resources in"
     type        = string
-    default     = "us-west1"
+    default     = "us-central1"
 }
 
 variable "zone" {
     description = "The GCP zone to create and test resources in"
     type        = string
-    default     = "us-west1-a"
+    default     = "us-central1-a"
 }
 
 variable "disk-type" {
@@ -49,7 +49,7 @@ variable "disk-size" {
 variable "image" {
     description = "Source disk image."
     type        = string
-    default     = "ubuntu-1804-bionic-v20220419" 
+    default     = "centos-7-v20220406" 
 }
 
 variable "instance-count-nifi" {
@@ -109,7 +109,7 @@ variable "zk-version" {
 variable "nifi-bucket" {
     description = "GCP bucket name"
     type        = string
-    default     = "gs://nifi-binaries"
+    default     = "gs://nifi-binaries-safshari"
 }
 
 variable "nifi-hostname"{
@@ -160,3 +160,21 @@ variable "bh-hostname" {
     type        = string
     default     = "bh-nifi"
 }
+
+variable "username" {
+     description = "The username used for NIFI user authorization"
+     type        = string
+     default     = "admin"
+}
+
+variable "password" {
+     description = "The password used for NIFI user authorization"
+     type        = string
+     default     = "admin123456789"
+ }
+
+ variable "jdkpackage" {
+     description = ""
+     type = string
+     default = "OpenJDK11U-jdk_x64_linux_hotspot_11.0.15_10.tar.gz"
+ }
