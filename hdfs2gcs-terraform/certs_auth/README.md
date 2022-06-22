@@ -32,7 +32,7 @@ gcloud config set project PROJECT_ID
 ```                                              
 bash ./run.sh  "bucket_name"
 ```
-7. Once the terraform finished provisioning the required resources, in order to access the NIFI UI, you can provision a Windows VM in the same VPC of the NIFI cluster (set the hostname of this VM to the defualt value of the bh-hostname variable in variable.tf or modify the default value of this parameter before running the run.sh scrip) following [this instruction](https://cloud.google.com/compute/docs/instances/connecting-to-windows) or alternatively provision a Linux VM (with the default hostname) and follow [this intruction](https://cloud.google.com/architecture/chrome-desktop-remote-on-compute-engine) to set up Chrome Remote Desktop.
+7. Once the terraform finished provisioning the required resources, in order to access the NIFI UI, you can provision a Windows VM in the same VPC of the NIFI cluster (set the hostname of this VM to the defualt value of the bh-hostname variable in variable.tf or modify the default value of this parameter before running the run.sh script) following [this instruction](https://cloud.google.com/compute/docs/instances/connecting-to-windows) or alternatively provision a Linux VM (with the default hostname) and follow [this intruction](https://cloud.google.com/architecture/chrome-desktop-remote-on-compute-engine) to set up Chrome Remote Desktop.
    
 8. Connect to the bastion host VM and follow below steps to open NIFI web interface.
    
