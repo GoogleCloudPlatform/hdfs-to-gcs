@@ -19,6 +19,18 @@ BUCKET_NAME=$1
 # Copying resource folder to GCS bucket
 gsutil cp -r ../resource/* gs://$BUCKET_NAME
 
+# If you are using an existing network & subnetwork, comment all the lines in network.tf and firewall.tf and use the network id of your own network OR shared VPC
+# in network_interface block in nifi.tf, nifi-ca.tf & zookeeper.tf with the below format:
+# network_interface {  
+#    network            = "projects/$ProjectName//global/networks/$NetworkName
+#    subnetwork         = "projects/$ProjectName/regions/$SubnetRegion/subnetworks/$SubnetName"
+#}
+
+# apply the firewall rules required in firewall.tf to your existing network
+
+# in case you want to use shared VPC before running terraform commands run the below command to give the service account permission to use the network from another project
+# gcloud projects add-iam-policy-binding $ProjectName --role roles/compute.networkUser --member serviceAccount:xxxx.iam.gserviceaccount.com'
+
 # terraform initialization
 terraform init
 

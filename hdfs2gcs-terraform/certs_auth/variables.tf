@@ -160,3 +160,9 @@ variable "bh-hostname" {
     type        = string
     default     = "bh-nifi"
 }
+
+ variable "jdkpackage" {
+     description = ""
+     type = string
+     default = "openjdk-11+28_linux-x64_bin.tar.gz"
+ }

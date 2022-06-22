@@ -1,3 +1,4 @@
+# Terraform Setup for HDFS2GCS Solution
 Below scripts provision required resources for Hdfs to GCS solution on GCP. In this deployment, we assume external IP can be set to VMs and created resources have Internet access. If you are not able to have external IP, switch the branch to "internal-ip-only" and continue from there.
 - provider.tf: Specifies "google" as the cloud environment, the project and region where the solution is deployed and the path for service account credential file. 
 - nifi.tf: provisioning a cluster of Ubuntu based GCP compute instances with NIFI installed and launched.

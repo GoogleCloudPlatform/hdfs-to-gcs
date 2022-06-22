@@ -17,6 +17,7 @@
  // This file creates firewall rules for provisioned VPC network.
 
 // Firewall rule for ssh access to cluster VMs
+
 resource "google_compute_firewall" "allow-ssh" {
     
     name    = "allow-ssh"
@@ -85,3 +86,4 @@ resource "google_compute_firewall" "bastionhost-allow-rdp" {
 
     target_tags = ["bastionhost"]
 }
+
