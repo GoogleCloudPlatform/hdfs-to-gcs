@@ -33,7 +33,7 @@ gcloud config set project PROJECT_ID
 bash ./run.sh  "bucket_name"
 ```
 1. Once the terraform finished provisioning the required resources, in order to access the NIFI UI, you can provision a Windows VM in the same VPC of the NIFI cluster or alternatively provision a Linux VM (with the default hostname) and follow [this intruction](https://cloud.google.com/architecture/chrome-desktop-remote-on-compute-engine) to set up Chrome Remote Desktop.
-   - You can also use SSH with IAP's TCP forwarding feature wraps an SSH connection inside HTTPS. Learn more from this (link)[https://cloud.google.com/iap/docs/using-tcp-forwarding#tunneling_with_ssh]
+   - You can also use SSH with IAP's TCP forwarding feature wraps an SSH connection inside HTTPS. Learn more from this [link](https://cloud.google.com/iap/docs/using-tcp-forwarding#tunneling_with_ssh).
 2. Connect to the bastion host VM and follow below steps to open NIFI web interface.
    
 3. Open URL "https://nifi-1:8443/nifi" in a browser and use the username and password values from variable.tf to login.
