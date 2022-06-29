@@ -7,7 +7,8 @@ Below scripts provision required resources for Hdfs to GCS solution on GCP. Use 
 - network.tf: provisioning a VPC network and subnet resource on GCP wihtin a single region.
 - firewall.tf: provisioning control access and trafic rules to and from compute instances
 - variable.tf: Contains all the required parameters for the terraform deployment 
-
+- bigquery.tf: creating a bigquery dataset and 3 tables in the specified region
+- pubsub.tf: creating a pubsub topic and a subscription in pull mode 
 
 In order to deploy this solution, follow the below steps: 
 1. Clone this project in your local machine and go to "hdfs2gcs-terraform" folder. We are assuming you have terraform (tested with Terraform v0.13.6) is installed in your local machine or use the google cloud shell which comes with terraform.

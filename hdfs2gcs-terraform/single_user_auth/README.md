@@ -1,12 +1,14 @@
 # Terraform Setup for HDFS2GCS Solution
 Below scripts provision required resources for Hdfs to GCS solution on GCP. Use these instruction only when you can not have external IP and Internet access on the VMs. Note that in this deployment only a single user is authenticated by login with username and password in the UI. This feature supports a minimal amount of attempts for security and is not recommended. 
-- provider.tf: Specifies "google" as the cloud environment, the project and region where the solution is deployed and the path for service account credential file. 
+- provider.tf: specifies "google" as the cloud environment, the project and region where the solution is deployed and the path for service account credential file. 
 - nifi.tf: provisioning a cluster of Ubuntu based GCP compute instances with NIFI installed and launched.
 - nifi-ca.tf: provisioning a Certitficate Authority server which certifies NIFI cluster instances and bastion host machine
 - zookeeper.tf: provisioning a Zookeeper cluster for NIFI cluster coordination.
 - network.tf: provisioning a VPC network and subnet resource on GCP wihtin a single region.
 - firewall.tf: provisioning control access and trafic rules to and from compute instances
-- variable.tf: Contains all the required parameters for the terraform deployment 
+- variable.tf: contains all the required parameters for the terraform deployment 
+- bigquery.tf: creating a bigquery dataset and 3 tables in the specified region
+- pubsub.tf: creating a pubsub topic and a subscription in pull mode 
 
 
 In order to deploy this solution, follow the below steps: 

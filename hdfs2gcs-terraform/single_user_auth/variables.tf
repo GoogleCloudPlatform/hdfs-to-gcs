@@ -19,7 +19,7 @@
 variable "project-id" {
     description = "The GCP project to use for integration tests"
     type        = string
-    default     = "safshari-sandbox"
+    default     = "test-sandbox"
 }
 
 variable "region" {
@@ -109,7 +109,7 @@ variable "zk-version" {
 variable "nifi-bucket" {
     description = "GCP bucket name"
     type        = string
-    default     = "gs://nifi-binaries-safshari"
+    default     = "gs://nifi-binaries"
 }
 
 variable "nifi-hostname"{

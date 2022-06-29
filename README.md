@@ -24,15 +24,15 @@ A complete end to end solution to migrate data from traditional Hadoop clusters 
 The full solution, including the use of crc32c checksums for transfer validation, is tested with Apache Hadoop 2.10 onwards, which corresponds to Hortonworks 3+ and Cloudera Data Hub 5+. However, the solution supports the transfer of data from earlier distributions of Hadoop without support for crc32c checksum.
 
 ## Prerequisites
-1. GCP Service account with following permission to deploy the tool for Pull Mode
+1. GCP Service account with following permission to deploy the HDFS2GCS tool for Pull Mode and run flows 
 	- Service account user role to use service compute role
-	- ComputeAdmin role to create and manage GCE VMs for tool deployment
-2. GCP Service account with following permissions to run flows using HDFS2GCS tool:
-	- BigQuery Admin role to insert data for status reporting and failures
-	- PubSub Editor role to store and retry failures
-	- Storage Admin role to create GCS buckets and objects
-3. Account having access to DataStudio for dashboarding
-4. Firewall rules/ports to open connectivity between on-prem cluster and GCE VMs
+	- Compute admin role to create and manage GCE VMs for tool deployment
+	- BiqQuery admin role to create dataset and underlying tables, and to insert data for status reporting and failures
+	- PubSub editor role to create topic, attach subscriber to it, and to store and retry failures
+	- Storage admin role to create GCS buckets and objects
+
+2. Account having access to DataStudio for dashboarding
+3. Firewall rules/ports to open connectivity between on-prem cluster and GCE VMs
     |        Node        | Port |            Configuration            |
     |--------------------|------|-------------------------------------|
     | NameNode           | 8020 | fs.defaultFS or fs.default.name     |
@@ -42,47 +42,12 @@ The full solution, including the use of crc32c checksums for transfer validation
     | DataNode           | 9865 | dfs.datanode.https.address          |
     | DataNode           | 9867 | dfs.datanode.ipc.address            |
 
-5. Access to hadoop cluster to list and fetch files present in HDFS
+4. Access to hadoop cluster to list and fetch files present in HDFS
 	- core-site.xml
 	- hdfs-site.xml
 	- Kerberos credentials
-6. BigQuery dataset with three following tables
-    ### Table name: hdfs_gcp_success
-    ### Schema:
-    | Field name        | Type    | Description                                         |
-    |-------------------|---------|-----------------------------------------------------|
-    | path              | STRING  | path to hdfs file                                   |
-    | filename          | STRING  | hdfs file name                                      |
-    | filesize          | INTEGER | hdfs filesize in bytes                              |
-    | timemillis        | INTEGER | timestamp in millis                                 |
-    | gcs_filesize      | INTEGER | gcs file size                                       |
-    | hdfs_crc32c       | STRING  | composite crc32c checksum of file in hdfs           |
-    | gcs_crc32c        | STRING  | crc32c checksum of file after putting in gcs bucket |
-    | hdfs_lastmodified | INTEGER | last modified time of file in HDFS in millis        |
 
-    ### Table name: hdfs_gcp_failures
-    ### Schema:
-    | Field name     | Type    | Description         |
-    |----------------|---------|---------------------|
-    | path           | STRING  | path to hdfs file   |
-    | filename       | STRING  | hdfs file name      |
-    | nbr_of_retries | INTEGER | number of retries   |
-    | errmsg         | STRING  | error message       |
-    | timemillis     | INTEGER | timestamp in millis |
-
-    ### Table name: hdfs_gcp_transfer_rate
-    ### Schema:
-
-    | Field name | Type    | Description                                                    |
-    |------------|---------|----------------------------------------------------------------|
-    | operation  | STRING  | defines fetch hdfs or put gcs operation                        |
-    | filecount  | INTEGER | number of files fetched or transferred during the elapsed time |
-    | volbytes   | INTEGER | volume of data fetched or transfered during elapsed time       |
-    | timemillis | INTEGER | time in millis                                                 |
-
-7. PubSub topic for handling failures
-8. PubSub Subscription so that tool can replay failures.
-9. Minimum hardware requirment is VMs with 4G memory. 
+5. Minimum hardware requirment is VMs with 4G memory. 
     -   Hardware Recommendation: 
         - Use persistent SSD disk types with 1024 GB capacity for large IOps. This is required since NiFi keeps flow related data in these disks and access that frequently.
         - Use high cpu compute instances for NiFi to get better performance.
