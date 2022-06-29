@@ -57,7 +57,11 @@ The full solution, including the use of crc32c checksums for transfer validation
 
 
 ## Deployment 
-[Follow this guide for the deployment](./hdfs2gcs-terraform/README.md)
+There are 3 ways that you can deploy this solution:
+1. If you can have external IP for your GCP VMs, [follow this guide](./hdfs2gcs-terraform/external_ip_enabled/README.md)
+2. If you can't enable external IP and you want to go with SSL certificate authorization to access the NIFI UI, [follow this guide](./hdfs2gcs-terraform/certs_auth/README.md)
+3. If you can't enable external IP and you want to go with single user authorization with username and password, [follow this guide](./hdfs2gcs-terraform/single_user_auth/README.md)
+
 
 
 ## Setup Hdfs to GCS transfer process
