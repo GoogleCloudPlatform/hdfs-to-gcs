@@ -13,8 +13,8 @@ Below scripts provision required resources for Hdfs to GCS solution on GCP. Use 
 In order to deploy this solution, follow the below steps: 
 1. Clone this project in your local machine and go to "hdfs2gcs-terraform" folder. We are assuming you have terraform (tested with Terraform v0.13.6) is installed in your local machine or use the google cloud shell which comes with terraform.
 ```
-git clone // URL 
-cd hdfs2gcs-terraform
+git clone https://github.com/GoogleCloudPlatform/hdfs-to-gcs.git
+cd hdfs-to-gcs/hdfs2gcs-terraform/certs_auth
 gcloud config set project PROJECT_ID
 ```
 2. Modify the credential variable in provider.tf to the path to your service account credential file (*.json). ([How to create service account credential key](https://cloud.google.com/iam/docs/creating-managing-service-account-keys#creating))
