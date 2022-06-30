@@ -16,8 +16,8 @@
 
 # Running terraform scripts with storing required files in GCS bucket 
 BUCKET_NAME=$1
-gsutil cp -r ../resource/* gs://$BUCKET_NAME
-mkdir -p ../binaries
+gsutil cp -r ../../resource/* gs://$BUCKET_NAME
+mkdir -p ../../binaries
 # unzip tool
 curl -fSL "http://ftp.de.debian.org/debian/pool/main/u/unzip/unzip_6.0-23+deb10u2_amd64.deb" -o ../binaries/unzip_6.0-23+deb10u2_amd64.deb
 curl -fSL "http://mirror.centos.org/centos/7/os/x86_64/Packages/unzip-6.0-21.el7.x86_64.rpm" -o ../binaries/unzip-6.0-21.el7.x86_64.rpm
@@ -35,7 +35,7 @@ curl -fSL "https://downloads.apache.org/zookeeper/zookeeper-3.8.0/apache-zookeep
 curl -fSL "https://download.java.net/openjdk/jdk11/ri/openjdk-11+28_linux-x64_bin.tar.gz" -o ../binaries/openjdk-11+28_linux-x64_bin.tar.gz
 
 # Copying resource folder to GCS bucket
-gsutil cp -r ../binaries/* gs://$BUCKET_NAME/binaries
+gsutil cp -r ../../binaries/* gs://$BUCKET_NAME/binaries
 
 # If you are using an existing network & subnetwork, comment all the lines in network.tf and firewall.tf and use the network id of your own network OR shared VPC
 # in network_interface block in nifi.tf, nifi-ca.tf & zookeeper.tf with the below format:
