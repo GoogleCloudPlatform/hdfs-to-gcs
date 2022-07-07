@@ -61,7 +61,7 @@ resource "google_compute_instance" "nifi-ca" {
             su nifi -c 'unzip ${var.nifi-path}/nifi-toolkit-${var.nifi-version}-bin.zip -d ${var.nifi-path}'
             su nifi -c 'rm ${var.nifi-path}/nifi-toolkit-${var.nifi-version}-bin.zip'
             su nifi -c 'cd /home/nifi && ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh server -c ${var.nifi-ca-hostname} -t ${var.ca-token} &'
-            sleep 1
+            sleep 1m
             cd /root
             ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh client -D CN=${var.bh-hostname},OU=NIFI -c ${var.nifi-ca-hostname} -t ${var.ca-token}
             KEYSTORE_PASSWORD=`cat config.json | grep -o '"keyStorePassword" : "[^"]*' | grep -o '[^"]*$'`
