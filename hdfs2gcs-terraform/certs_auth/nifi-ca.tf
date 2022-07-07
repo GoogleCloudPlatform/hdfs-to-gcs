@@ -70,7 +70,7 @@ resource "google_compute_instance" "nifi-ca" {
             chown nifi:nifi -R ${var.nifi-path}/*
             find ${var.nifi-path} -type f -iname "*.sh" -exec chmod +x {} \;
             su nifi -c 'export PATH=$PATH:/usr/lib/jvm/jdk/bin && cd /home/nifi && ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh server -c ${var.nifi-ca-hostname} -t ${var.ca-token} &'
-            sleep 2
+            sleep 1m
             cd /root
             export PATH=$PATH:/usr/lib/jvm/jdk/bin && ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh client -D CN=${var.bh-hostname},OU=NIFI -c ${var.nifi-ca-hostname} -t ${var.ca-token}
             KEYSTORE_PASSWORD=`cat config.json | grep -o '"keyStorePassword" : "[^"]*' | grep -o '[^"]*$'`
