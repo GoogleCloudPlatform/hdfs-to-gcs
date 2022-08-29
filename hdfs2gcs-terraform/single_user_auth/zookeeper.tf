@@ -37,10 +37,8 @@ resource "google_compute_instance" "zookeeper" {
     }
 
     network_interface {
-        #network            = google_compute_network.default.name
-        #subnetwork         = google_compute_subnetwork.default.name
-        network            = "projects/mbawa-sandbox/global/networks/nifi-network"
-        subnetwork         =  "projects/mbawa-sandbox/regions/us-central1/subnetworks/nifi-network-test"
+        network            = google_compute_network.default.name
+        subnetwork         = google_compute_subnetwork.default.name
     }
 
     metadata_startup_script =   <<EOF
