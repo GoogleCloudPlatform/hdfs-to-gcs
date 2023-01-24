@@ -102,8 +102,8 @@ resource "google_compute_instance" "nifi" {
           echo "waiting for CA server"
           sleep 1m
           
-          su nifi -c 'cd ${var.nifi-path}/nifi-${var.nifi-version}/conf && ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh client  -c ${var.nifi-ca-hostname} -t ${var.ca-token} '
           until  ls ${var.nifi-path}/nifi-${var.nifi-version}/conf/config.json; do
+          su nifi -c 'cd ${var.nifi-path}/nifi-${var.nifi-version}/conf && ${var.nifi-path}/nifi-toolkit-${var.nifi-version}/bin/tls-toolkit.sh client  -c ${var.nifi-ca-hostname} -t ${var.ca-token} '
           sleep 1
           done
           KEYSTORE_PASSWORD=`cat ${var.nifi-path}/nifi-${var.nifi-version}/conf/config.json | grep -o '"keyStorePassword" : "[^"]*' | grep -o '[^"]*$' `
