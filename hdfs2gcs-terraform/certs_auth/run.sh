@@ -32,7 +32,7 @@ curl -fSL "https://archive.apache.org/dist/nifi/1.15.3/nifi-toolkit-1.15.3-bin.z
 curl -fSL "https://downloads.apache.org/zookeeper/zookeeper-3.8.0/apache-zookeeper-3.8.0-bin.tar.gz" -o ../../binaries/apache-zookeeper-3.8.0-bin.tar.gz
 
 # jdk 11
-curl -fSL "https://download.java.net/openjdk/jdk11/ri/openjdk-11+28_linux-x64_bin.tar.gz" -o ../../binaries/openjdk-11+28_linux-x64_bin.tar.gz
+curl -fSL "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.15%2B10/OpenJDK11U-jdk_x64_linux_hotspot_11.0.15_10.tar.gz" -o ../../binaries/OpenJDK11U-jdk_x64_linux_hotspot_11.0.15_10.tar.gz
 
 # Copying resource folder to GCS bucket
 gsutil cp -r ../../binaries/* gs://$BUCKET_NAME/binaries
