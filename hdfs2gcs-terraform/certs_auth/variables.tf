@@ -164,5 +164,5 @@ variable "bh-hostname" {
  variable "jdkpackage" {
      description = ""
      type = string
-     default = "openjdk-11+28_linux-x64_bin.tar.gz"
+     default = "OpenJDK11U-jdk_x64_linux_hotspot_11.0.15_10.tar.gz"
  }
