@@ -49,7 +49,7 @@ variable "disk-size" {
 variable "image" {
     description = "Source disk image."
     type        = string
-    default     = "ubuntu-1804-bionic-v20220419" 
+    default     = "centos-7-v20220406"
 }
 
 variable "instance-count-nifi" {
